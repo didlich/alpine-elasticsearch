@@ -1,5 +1,16 @@
 #!/bin/sh
 
+# Add local user
+# Either use the LOCAL_USER_ID if passed in at runtime or
+# fallback
+
+USER_ID=${LOCAL_USER_ID:-9001}
+
+echo "Starting with UID : $USER_ID"
+addgroup -g $USER_ID user && adduser -D -G user -s /bin/false -u $USER_ID user
+export HOME=/home/user
+
+
 # ElasticSearch Docker Entrypoint as per:
 # https://github.com/docker-library/elasticsearch
 # Apache Licensed: https://github.com/docker-library/elasticsearch/blob/dce83166a2636abfac110a4555cdf17fd554ae91/LICENSE
@@ -11,17 +22,9 @@ if [ "${1:0:1}" = '-' ]; then
 	set -- elasticsearch "$@"
 fi
 
-# Drop root privileges if we are running elasticsearch
-# allow the container to be started with `--user`
-if [ "$1" = 'elasticsearch' -a "$(id -u)" = '0' ]; then
-	# Change the ownership of /usr/share/elasticsearch/data to elasticsearch
-	chown -R nobody:nobody /usr/share/elasticsearch/data
-	
-	set -- gosu elasticsearch "$@"
-	#exec gosu elasticsearch "$BASH_SOURCE" "$@"
-fi
 
-# As argument is not related to elasticsearch,
-# then assume that user wants to run his own process,
-# for example a `bash` shell to explore this image
-exec "$@"
+# Drop root privileges if we are running elasticsearch
+chown -R user:user /usr/share/elasticsearch
+chown -R user:user /usr/share/$PKG_NAME-$ELASTICSEARCH_VERSION
+#chown -R user:user /usr/share/elasticsearch/data
+exec /usr/local/bin/gosu user "$@"

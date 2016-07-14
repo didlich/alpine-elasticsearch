@@ -70,7 +70,7 @@ VOLUME ["/usr/share/elasticsearch/data"]
 EXPOSE 9200
 EXPOSE 9300
 
-USER nobody
+#USER nobody
 
 # CMD
 ENTRYPOINT ["/docker-entrypoint.sh"]
